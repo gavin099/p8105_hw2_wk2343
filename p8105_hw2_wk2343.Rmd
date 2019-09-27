@@ -1,0 +1,242 @@
+---
+title: "191004_HW2"
+author: "Gavin Ko"
+date: "9/26/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+library(haven)
+library(tidyr)
+```
+
+# Problem 1
+
+## A. Mr. Trashwheel Data
+(Note. Library section is put in the include=false golbal setting chunk.) 
+
+First of all, data import.
+
+```{r read in data}
+Trash_data = 
+  read_excel(path = "data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", 
+             range = "A2:N338",
+             sheet = "Mr. Trash Wheel",
+             col_names = TRUE
+             ) %>% 
+  drop_na(Dumpster) %>% 
+  janitor :: clean_names()
+  
+```
+
+At this place, I've cleared all the missing or unrelated data.
+But, some variable names are not clear.
+Therefore, I'm going to apply some changes.
+
+```{r rename}
+Trash_data = 
+  rename(Trash_data, 
+         weight = weight_tons,
+         volume = volume_cubic_yards,
+         )
+```
+
+Now it looks better. 
+As requested, let's round the sports balls.
+
+```{r rounding sportsballs}
+mutate(Trash_data,
+       sports_balls = round(sports_balls, digits = 0),
+       sports_balls = as.integer(sports_balls)
+) %>% 
+pull(sports_balls)
+```
+Now the data is good to go!
+
+## B. Precipitation Data
+
+Let's read in the data for 2017 & 2018 first.
+  
+```{r read in 2017 & 2018}
+Precipitation_2017 = 
+  read_excel(path = "data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+             range = "A2:B14",
+             sheet = "2017 Precipitation",
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  drop_na(total)
+
+Precipitation_2018 = 
+  read_excel(path = "data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+             range = "A2:B14",
+             sheet = "2018 Precipitation",
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  drop_na(total)
+```
+
+Before the combination take place, we need to add the year variable.
+
+```{r adding variable years}
+Precipitation_2017 = 
+  mutate(Precipitation_2017,
+         year = 2017)
+
+Precipitation_2018 = 
+  mutate(Precipitation_2018,
+         year = 2018)
+```
+
+Now, let's try to combine the data.
+
+```{r mutating data}
+Precipitation_merged = bind_rows(Precipitation_2017, Precipitation_2018) 
+```
+
+This doesn't look really tidy, so let me also change the order.
+
+```{r select}
+Precipitation_merged = 
+  select(Precipitation_merged, year, everything()) %>% 
+  mutate(
+  month = as.numeric(month),
+  month = month.name[month],
+  )
+```
+
+For data summary, I'm going to talk about Mr. Trash Wheel first.
+
+After removing missing data, Mr. Trash Wheel dataset has collected record from n =  `r length(pull(Trash_data, dumpster))` dumpsters. 
+Among these observations, the average weight of waste was `r round( mean(pull(Trash_data, weight)), 2)` tons, with median at `r median(pull(Trash_data, weight))` tons.
+Maximum weight record happened in `r pull(filter(Trash_data, weight == max(weight)), date)`, which recorded a historical `r pull(filter(Trash_data, weight == max(weight)), weight)` tons of waste. In volume scale, the average volume of waste was `r round( mean(pull(Trash_data, volume)), 2)` qubic yrads, with median at `r median(pull(Trash_data, volume))` qubic yards. Maximum volume record happened in `r pull(filter(Trash_data, volume == max(volume)), date)`, which recorded a historical `r pull(filter(Trash_data, volume == max(volume)), volume)` quibic yards of waste. During the data collection period, Mr. Trash Wheel has contributed in total `r sum(pull(Trash_data, weight))` tons, `r sum(pull(Trash_data, volume))` qubic yards of waste, and powered `r as.integer(sum(pull(Trash_data, homes_powered)))` families. Thanks Mr. Trash Wheel!
+
+Secondly, I'm going to talk about Precipitation data. 
+
+After removing missing data, Precipitation dataset has collected record n =  `r length(pull(Precipitation_merged, total))` months of data. 
+Among these observations, the mean sediment depth was `r round( mean(pull(Precipitation_merged, total)), 2)` inches, with median at `r median(pull(Precipitation_merged, total))` inches.
+Total amount of collected sediment depth during this period was `r sum(pull(Precipitation_merged, total))` inches. Maximum amount of sediment was recorded on `r pull(filter(Precipitation_merged, total == max(total)),month)`, `r pull(filter(Precipitation_merged, total == max(total)),year)` with `r pull(filter(Precipitation_merged, total == max(total)),total)` inches of precipitation.  Specific to precipitation in 2018, the total sediments was `r sum (pull(filter(Precipitation_merged, year == 2018), total))` inches.
+Specific to sports balls, the median number of them in 2017 was `r median( pull(filter(Trash_data, year == 2017), sports_balls))`.
+
+# Problem 2
+First, read the files.
+```{r read files}
+Pols_month_data = read.csv("data/pols-month.csv") %>% 
+  janitor::clean_names()
+
+Unemployment_data = read.csv("data/unemployment.csv") %>% 
+  janitor::clean_names()
+
+Snp_data = read.csv("data/snp.csv") %>% 
+  janitor::clean_names()
+```
+Of course it is not clean enough. Let's deal with pols-month first.
+
+```{r pols month operation}
+Pols_month_data = 
+  mutate(Pols_month_data,
+         mon = as.character(mon)) %>% 
+  separate(mon, into = c("year","month","day"), sep = "-") %>%
+  mutate(month = month.name[as.numeric(month)],
+         president = prez_gop - prez_dem,
+         president = factor(president, labels = c("dem","gop","gop"))) %>%
+  select(year, month, president, everything(), -day, -prez_dem, -prez_gop)
+```
+
+Secondly, time for snp.
+
+```{r snp operation}
+Snp_data = 
+  separate(Snp_data, date, into = c("month", "day", "year"), sep = "/") %>%
+  select(year, month, snp_close = close, -day) %>% 
+  mutate(month = as.numeric(month)) %>% 
+  arrange(year, month) %>% 
+  mutate(month = month.name[month])
+
+```
+
+Lastly, unemployment.
+
+```{r Unemployment operation}
+Unemployment_data = 
+  pivot_longer(Unemployment_data,
+               jan:dec,
+               names_to = "month",
+               values_to = "unemployment_rate"
+               ) %>% 
+  mutate(month = recode(month, "jan" = "January", "feb" = "February",
+                               "mar" = "March", "apr" = "April",
+                               "may" = "May", "jun" = "June",
+                               "jul" = "July", "aug" = "August",
+                               "sep" = "September", "oct" = "October",
+                               "nov" = "November", "dec" = "December"),
+         year = as.character(year))
+```
+
+Last step is to join the data.
+
+```{r snp to pols}
+Pols_snp_join = 
+  left_join(Pols_month_data, Snp_data, by = c("year","month") ) 
+
+Grand_join =   
+  left_join(Pols_snp_join, Unemployment_data, by = c("year","month")) 
+```
+First dataset `pols` contains political data at that time: the party of current President (`president`), respective numbers of Governors(`gov_gop, gov_dem`), Senators(`sen_gop, sen_dem`), and Representatives(`rep_gov, rep_dem`). The second dataset `snp` contains the S&P 500 Index at the designated closing month(`snp_close`), which gives a sense of economic status at that time. The last dataset `unemployment` contains unemployment rate in US at that time.
+The merged dataset contains `r dim(Grand_join)[1]` months of data with `r dim(Grand_join)[2]` variables recorded. Years ranged from Jan,1947 to Dec, 2015. The NA status in snp_close and unemployment_rate is owing to the original data collection period. While snp data started from 1950, unemployment rate record started from 1948. 
+
+# Problem 3
+
+First of all, read the data again. During the process, I've also done the lowercases and ethnicity factor adjustment. After that, I've removed the duplicates.
+
+```{r read data and some cleaning}
+Pop_baby = read_csv("data/Popular_Baby_Names.csv", col_types = "icccii") %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    gender = factor(str_to_lower(gender)),
+    ethnicity = factor(str_to_lower(ethnicity)),
+    ethnicity = recode(ethnicity, "asian and paci" = "asian and pacific islander",
+                                  "black non hisp" = "black non hispanic",
+                                  "white non hisp" = "white non hispanic"),
+    childs_first_name = str_to_lower(childs_first_name)) %>% 
+  distinct(year_of_birth, gender, ethnicity, childs_first_name, count, rank)
+```
+Now the data is ready to go!
+
+Dealing with Olivia:
+```{r olivia}
+Olivia_table = 
+  filter(Pop_baby, childs_first_name == "olivia" & gender == "female") %>% 
+  select(year_of_birth, ethnicity, rank) %>% 
+  pivot_wider(
+    names_from = year_of_birth,
+    values_from = rank)
+Olivia_table
+
+```
+
+Favorite male children names:
+```{r best boy name NA}
+Male_children_table =
+  filter(Pop_baby, rank == 1 & gender == "male") %>% 
+  select(year_of_birth, ethnicity, childs_first_name) %>% 
+  pivot_wider(
+    names_from = year_of_birth,
+    values_from = childs_first_name)
+Male_children_table
+
+```
+Lastly, produce the scatter plot.
+
+```{r filtered data}
+  filter(Pop_baby, year_of_birth == 2016 & gender == "male" & ethnicity == "white non hispanic") %>% 
+  ggplot(aes(x = rank, y = count)) + geom_point()
+```
+
+
+
+
+
+
