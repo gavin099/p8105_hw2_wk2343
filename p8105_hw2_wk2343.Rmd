@@ -103,8 +103,7 @@ Precipitation_merged =
   select(Precipitation_merged, year, everything()) %>% 
   mutate(
   month = as.numeric(month),
-  month = month.name[month],
-  )
+  month = month.name[month],)
 ```
 
 For data summary, I'm going to talk about Mr. Trash Wheel first.
