@@ -108,16 +108,21 @@ Precipitation_merged =
 
 For data summary, I'm going to talk about Mr. Trash Wheel first.
 Key variables are the recorded date(`date`), sediment weight(`weight`), volume(`volume`) and homes powered by Mr. Trash Wheel(`homes_powered`). 
-After removing missing data, Mr. Trash Wheel dataset has collected record from n =  `r length(pull(Trash_data, dumpster))` dumpsters. 
+After removing missing data, Mr. Trash Wheel dataset has collected record from n =  `r nrow(Trash_data)` dumpsters, with `r ncol(Trash_data)` columns of variables. 
 Among these observations, the average weight of waste was `r round( mean(pull(Trash_data, weight)), 2)` tons, with median at `r median(pull(Trash_data, weight))` tons.
 Maximum weight record happened in `r pull(filter(Trash_data, weight == max(weight)), date)`, which recorded a historical `r pull(filter(Trash_data, weight == max(weight)), weight)` tons of waste. In volume scale, the average volume of waste was `r round( mean(pull(Trash_data, volume)), 2)` qubic yrads, with median at `r median(pull(Trash_data, volume))` qubic yards. Maximum volume record happened in `r pull(filter(Trash_data, volume == max(volume)), date)`, which recorded a historical `r pull(filter(Trash_data, volume == max(volume)), volume)` quibic yards of waste. During the data collection period, Mr. Trash Wheel has contributed in total `r sum(pull(Trash_data, weight))` tons, `r sum(pull(Trash_data, volume))` qubic yards of waste, and powered `r as.integer(sum(pull(Trash_data, homes_powered)))` families. Thanks Mr. Trash Wheel!
 
 Secondly, I'm going to talk about Precipitation data. 
 
-After removing missing data, Precipitation dataset has collected record n =  `r length(pull(Precipitation_merged, total))` months of data. 
+After removing missing data, Precipitation dataset has collected record n =  `r nrow(Precipitation_merged)` months of data, with `r ncol(Precipitation_merged)` columns of variables. 
 Among these observations, the mean sediment depth was `r round( mean(pull(Precipitation_merged, total)), 2)` inches, with median at `r median(pull(Precipitation_merged, total))` inches.
-Total amount of collected sediment depth during this period was `r sum(pull(Precipitation_merged, total))` inches. Maximum amount of sediment was recorded on `r pull(filter(Precipitation_merged, total == max(total)),month)`, `r pull(filter(Precipitation_merged, total == max(total)),year)` with `r pull(filter(Precipitation_merged, total == max(total)),total)` inches of precipitation.  Specific to precipitation in 2018, the total sediments was `r sum (pull(filter(Precipitation_merged, year == 2018), total))` inches.
-Specific to sports balls, the median number of them in 2017 was `r median( pull(filter(Trash_data, year == 2017), sports_balls))`.
+Total amount of collected sediment depth during this period was `r sum(pull(Precipitation_merged, total))` inches. Maximum amount of sediment was recorded on `r pull(filter(Precipitation_merged, total == max(total)),month)`, `r pull(filter(Precipitation_merged, total == max(total)),year)` with `r pull(filter(Precipitation_merged, total == max(total)),total)` inches of precipitation.  
+
+Specific to precipitation in 2018, the total sediments was 
+`r sum (pull(filter(Precipitation_merged, year == 2018), total))` inches.
+
+Specific to sports balls, the median number of them in 2017 was 
+`r median( pull(filter(Trash_data, year == 2017), sports_balls))`.
 
 # Problem 2
 First, read the files.
@@ -224,7 +229,8 @@ Lastly, produce the scatter plot.
 
 ```{r filtered data}
   filter(Pop_baby, year_of_birth == 2016 & gender == "male" & ethnicity == "white non hispanic") %>% 
-  ggplot(aes(x = rank, y = count)) + geom_point()
+  ggplot(aes(x = rank, y = count)) + geom_point() +
+  ggtitle("2016 White Male Baby Names Popularity")
 ```
 
 
