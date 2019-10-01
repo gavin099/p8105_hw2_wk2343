@@ -22,8 +22,8 @@ First of all, data import.
 
 ```{r read in data}
 Trash_data = 
-  read_excel(path = "data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", 
-             range = "A2:N338",
+  read_excel(path = "data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+             range = "A2:N406",
              sheet = "Mr. Trash Wheel",
              col_names = TRUE
              ) %>% 
@@ -62,7 +62,7 @@ Let's read in the data for 2017 & 2018 first.
   
 ```{r read in 2017 & 2018}
 Precipitation_2017 = 
-  read_excel(path = "data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  read_excel(path = "data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
              range = "A2:B14",
              sheet = "2017 Precipitation",
              col_names = TRUE) %>% 
@@ -70,7 +70,7 @@ Precipitation_2017 =
   drop_na(total)
 
 Precipitation_2018 = 
-  read_excel(path = "data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  read_excel(path = "data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
              range = "A2:B14",
              sheet = "2018 Precipitation",
              col_names = TRUE) %>% 
@@ -102,8 +102,7 @@ This doesn't look really tidy, so let me also change the order.
 Precipitation_merged = 
   select(Precipitation_merged, year, everything()) %>% 
   mutate(
-  month = as.numeric(month),
-  month = month.name[month],)
+  month = month.name[as.numeric(month)])
 ```
 
 For data summary, I'm going to talk about Mr. Trash Wheel first.
